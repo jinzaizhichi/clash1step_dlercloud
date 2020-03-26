@@ -12,22 +12,29 @@ while [[ -z ${password} ]]; do
 done
 
 while [[ -z ${loc_ip} ]]; do
-    loc_ip=$(whiptail --inputbox --nocancel "输入本机IP（现在安装Clash机器的ip）" 8 78 --title "输入本机IP" 3>&1 1>&2 2>&3)
+    loc_ip=$(whiptail --inputbox --nocancel "输入本机IP（现在安装Clash机器的ip）" 8 78 --title "本机IP" 3>&1 1>&2 2>&3)
 done
 
 while [[ -z ${gate_ip} ]]; do
-    gate_ip=$(whiptail --inputbox --nocancel "输入网关IP（输入网关IP（主路由）" 8 78 --title "输入网关IP" 3>&1 1>&2 2>&3)
+    gate_ip=$(whiptail --inputbox --nocancel "输入网关IP（输入网关IP（主路由）" 8 78 --title "网关IP" 3>&1 1>&2 2>&3)
 done
 
 while [[ -z ${dns} ]]; do
-    dns=$(whiptail --inputbox --nocancel "输入dns（随你喜欢）" 8 78 --title "输入dns" 3>&1 1>&2 2>&3)
+    dns=$(whiptail --inputbox --nocancel "输入dns（随你喜欢）" 8 78 --title "dns" 3>&1 1>&2 2>&3)
 done
 
 while [[ -z ${config} ]]; do
-    config=$(whiptail --inputbox --nocancel "输入链接（仅测试墙洞）" 8 78 --title "输入Clash托管连接" 3>&1 1>&2 2>&3)
+    config=$(whiptail --inputbox --nocancel "输入链接（仅测试墙洞）" 8 78 --title "Clash托管连接" 3>&1 1>&2 2>&3)
+done
+
+while [[ -z ${port} ]]; do
+    port=$(whiptail --inputbox --nocancel "输入控制面板端口（例如9090）" 8 78 --title "控制面板端口" 3>&1 1>&2 2>&3)
+done
+
+while [[ -z ${secret} ]]; do
+    secret=$(whiptail --inputbox --nocancel "输入控制面板密码（例如9090）" 8 78 --title "控制面板密码" 3>&1 1>&2 2>&3)
 done
 }
-
 
 dt_system_dep(){
 
@@ -107,9 +114,35 @@ cd /home/$user/.config/clash
 
 wget -O config.yaml $config
 
-sed -i '/external-controller/a\external-ui:dashboard' config.yaml
+sed -i '1d' config.yaml
 
-sed -i '/external-ui/a\secret:"123456"' config.yaml
+sed -i '/^port/d' config.yaml
+
+sed -i '/^socks-port/d' config.yaml
+
+sed -i '/^redir-port/d' config.yaml
+
+sed -i '/^allow-lan/d' config.yaml
+
+sed -i '/^external-controller/d' config.yaml
+
+sed -i '/^external-ui/d' config.yaml
+
+sed -i '/^secret:/d' config.yaml
+
+sed -i '1i port:7890' config.yaml
+
+sed -i '/port:7890/a\socks-port:7891' config.yaml
+
+sed -i '/socks-port:7891/a\redir-port:7892' config.yaml
+
+sed -i '/redir-port:7892/a\allow-lan:true' config.yaml
+
+sed -i '/allow-lan:true/a\external-controller:0.0.0.0:$port' config.yaml
+
+sed -i '/external-controller:0.0.0.0/a\external-ui:dashboard' config.yaml
+
+sed -i '/external-ui:dashboard/a\secret: "&secret"' config.yaml
 
 wget https://github.com/haishanh/yacd/archive/gh-pages.zip
 
