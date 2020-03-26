@@ -142,7 +142,7 @@ sed -i '/allow-lan:true/a\external-controller:0.0.0.0:$port' config.yaml
 
 sed -i '/external-controller:0.0.0.0/a\external-ui:dashboard' config.yaml
 
-sed -i '/external-ui:dashboard/a\secret: "&secret"' config.yaml
+sed -i '/external-ui:dashboard/a\secret:"$secret"' config.yaml
 
 wget https://github.com/haishanh/yacd/archive/gh-pages.zip
 
