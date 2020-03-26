@@ -109,6 +109,12 @@ cd /home/$user/.config/clash
 
 wget -O config.yaml $config
 
+sed -i '/socks-port/a\redir-port:7892' config.yaml
+
+sed -i '/external-controller/a\external-ui:dashboard' config.yaml
+
+sed -i '/external-ui/a\secret:""' config.yaml
+
 wget https://github.com/haishanh/yacd/archive/gh-pages.zip
 
 unzip gh-pages.zip
