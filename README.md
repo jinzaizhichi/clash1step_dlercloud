@@ -20,8 +20,12 @@ bash <(wget --no-check-certificate -qO- http://uee.me/dbhvv)
 
 ## 3.机场托管的配置文件必须配置DNS参数，且必须为Fake-ip模式
 ### 关于fake-ip的原理，可以看看以下F大跟苏大的文章
+
+#####DNS污染对Clash（for Windows）的影响
 ###### https://github.com/Fndroid/clash_for_windows_pkg/wiki/DNS%E6%B1%A1%E6%9F%93%E5%AF%B9Clash%EF%BC%88for-Windows%EF%BC%89%E7%9A%84%E5%BD%B1%E5%93%8D
 
+##### 代替 Surge 增强模式——使用 KoolClash 作为代理网关
 ###### https://blog.skk.moe/post/alternate-surge-koolclash-as-gateway/
 
+##### 浅谈在代理环境中的 DNS 解析行为
 ###### https://blog.skk.moe/post/what-happend-to-dns-in-proxy/
