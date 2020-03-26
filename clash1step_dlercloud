@@ -7,6 +7,10 @@ while [[ -z ${user} ]]; do
     user=$(whiptail --inputbox --nocancel "输入用户名（准备安装Clash的非root用户）" 8 78 --title "创建非root用户" 3>&1 1>&2 2>&3)
 done
 
+while [[ -z ${password} ]]; do
+    password=$(whiptail --inputbox --nocancel "输入密码" 8 78 --title "创建密码" 3>&1 1>&2 2>&3)
+done
+
 while [[ -z ${loc_ip} ]]; do
     loc_ip=$(whiptail --inputbox --nocancel "输入本机IP（现在安装Clash机器的ip）" 8 78 --title "输入本机IP" 3>&1 1>&2 2>&3)
 done
@@ -20,7 +24,7 @@ while [[ -z ${dns} ]]; do
 done
 
 while [[ -z ${config} ]]; do
-    config=$(whiptail --inputbox --nocancel "输入dns（随你喜欢）" 8 78 --title "输入dns" 3>&1 1>&2 2>&3)
+    config=$(whiptail --inputbox --nocancel "输入链接（任意机场）" 8 78 --title "输入Clash托管连接" 3>&1 1>&2 2>&3)
 done
 }
 
@@ -30,6 +34,8 @@ dt_system_dep(){
 yes|apt -y install sudo supervisor iptables-persistent net-tools curl gzip unzip
 
 useradd -m -s /bin/bash $user
+
+echo $user:$password|chpasswd
 
 usermod -aG sudo $user
 
@@ -101,7 +107,7 @@ mkdir -p /home/$user/.config/clash
 
 cd /home/$user/.config/clash
 
-touch config.yaml
+wget -O config.yaml $config
 
 wget https://github.com/haishanh/yacd/archive/gh-pages.zip
 
