@@ -11,6 +11,23 @@ apt install wget -y
 bash <(wget --no-check-certificate -qO- http://uee.me/dbhvv)
 ```
 
+###### 3.一些操作指令
+启动Clash
+```
+sudo systemctl start clash.service
+```
+重启Clash
+```
+sudo systemctl restart clash.service
+```
+查看Clash运行状态
+```
+sudo systemctl status clash.service
+```
+实时滚动状态
+```
+sudo journalctl -u clash.service -f
+```
 
 # 脚本使用注意事项：
 
