@@ -33,6 +33,8 @@ dt_system_dep(){
 
 yes|apt -y install sudo supervisor iptables-persistent net-tools curl gzip unzip
 
+useradd -m -s /bin/bash $user
+
 usermod -aG sudo $user
 
 cat << EOF > /etc/sysctl.conf
