@@ -1,13 +1,16 @@
-# clash1step_dlercloud
-Clash for Linux一键安装脚本(支持订阅)
+# Clash for Linux一键安装脚本(支持订阅)
+#### 参照油管UP主：米月大佬的灯塔脚本修改的一键安装Clash For Linux。加入了一下功能：
+###### 1.支持创建非root用户，以供安装Clash
+###### 2.支持机场托管订阅（目前仅测试墙洞）
 
-参照油管UP主：米月大佬灯脚脚本修改的一键安装Clash For Linux。自用。。。
+# 脚本使用注意事项：
 
-# 只支持Debian 10.3（其他系统未测试）
+## 1.仅支持Ddebian10.3(其他系统未测试）
 
-## 本脚本支持新建一个非root用户用于安装clash，支持订阅机场托管(仅支持自带DNS配置且为fake-ip的托管)，其他机场需手动修改然后上传至目录
+## 2.脚本需在root用户下运行，且系统需要配置科学上网环境
 
-### 而且本方案使用的是Fake-ip的DNS模式，不喜勿用
+## 3.机场托管的配置文件必须配置DNS参数，且必须为Fake-ip模式
+
 
 ```
 apt install wget -y
