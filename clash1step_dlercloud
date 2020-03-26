@@ -1,0 +1,255 @@
+#!/bin/bash
+
+#获取信息
+dt_input(){
+
+while [[ -z ${user} ]]; do
+    user=$(whiptail --inputbox --nocancel "输入用户名（准备安装Clash的非root用户）" 8 78 --title "创建非root用户" 3>&1 1>&2 2>&3)
+done
+
+while [[ -z ${loc_ip} ]]; do
+    loc_ip=$(whiptail --inputbox --nocancel "输入本机IP（现在安装Clash机器的ip）" 8 78 --title "输入本机IP" 3>&1 1>&2 2>&3)
+done
+
+while [[ -z ${gate_ip} ]]; do
+    gate_ip=$(whiptail --inputbox --nocancel "输入网关IP（输入网关IP（主路由）" 8 78 --title "输入网关IP" 3>&1 1>&2 2>&3)
+done
+
+while [[ -z ${dns} ]]; do
+    dns=$(whiptail --inputbox --nocancel "输入dns（随你喜欢）" 8 78 --title "输入dns" 3>&1 1>&2 2>&3)
+done
+
+while [[ -z ${mtu} ]]; do
+    mtu=$(whiptail --inputbox --nocancel "输入MTU（不懂就填1480）" 8 78 --title "输入MTU" 3>&1 1>&2 2>&3)
+done
+
+while [[ -z ${mss} ]]; do
+    mss=$(whiptail --inputbox --nocancel "输入MSS（MTU-40）" 8 78 --title "输入MSS" 3>&1 1>&2 2>&3)
+done
+}
+
+
+dt_system_dep(){
+
+yes|apt -y install sudo supervisor iptables-persistent net-tools curl gzip unzip
+
+usermod -aG sudo $user
+
+cat << EOF > /etc/sysctl.conf
+net.ipv4.ip_forward=1
+fs.file-max = 999999
+net.core.rmem_max = 67108864
+net.core.wmem_max = 67108864
+net.core.rmem_default = 6291456
+net.core.wmem_default = 6291456
+net.core.netdev_max_backlog = 65535
+net.core.somaxconn = 262114
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 30
+net.ipv4.tcp_keepalive_time = 1200
+net.ipv4.tcp_max_syn_backlog = 8192
+net.ipv4.tcp_max_tw_buckets = 5000
+net.ipv4.tcp_mem = 8192 131072 67108864
+net.ipv4.tcp_rmem = 10240 87380 12582912
+net.ipv4.tcp_wmem = 10240 87380 12582912
+net.ipv4.tcp_mtu_probing = 1
+net.ipv4.tcp_notsent_lowat = 16384
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_max_orphans= 262114
+net.ipv4.tcp_fastopen = 3
+net.ipv4.ip_local_port_range = 1024 65000
+net.ipv4.udp_mem = 8192 131072 67108864
+net.ipv4.udp_rmem_min = 4096
+net.ipv4.udp_wmem_min = 4096
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+EOF
+
+echo " ">>/etc/sysctl.conf
+echo "# made for disabled IPv6 in $(date +%F)">>/etc/sysctl.conf
+echo 'net.ipv6.conf.all.disable_ipv6 = 1'>>/etc/sysctl.conf
+echo 'net.ipv6.conf.default.disable_ipv6 = 1'>>/etc/sysctl.conf
+echo 'net.ipv6.conf.lo.disable_ipv6 = 1'>>/etc/sysctl.conf
+tail -5 /etc/sysctl.conf
+
+sysctl -p
+
+cat << EOF > /etc/ssh/sshd_config
+ListenAddress 0.0.0.0
+AddressFamily inet
+EOF
+
+service sshd restart
+
+cat << EOF > /etc/systemd/resolved.conf
+DNSStubListener=no
+EOF
+}
+
+
+dt_clash(){
+
+
+wget -O /opt/clash.gz $CLS
+cd /opt
+
+gzip -d clash.gz
+mv clash /usr/bin/clash
+chmod +x /usr/bin/clash
+# 为 clash 添加绑定低位端口的权限，这样运行 clash 的时候无需 root 权限
+setcap cap_net_bind_service=+ep /usr/bin/clash
+
+mkdir -p /home/$user/.config/clash
+
+cd /home/$user/.config/clash
+
+touch config.yaml
+
+wget https://github.com/haishanh/yacd/archive/gh-pages.zip
+
+unzip gh-pages.zip
+
+mv yacd-gh-pages/ dashboard/
+
+chown -R $user /home/$user/.config/
+
+cat << EOF > /etc/systemd/system/clash.service
+[Unit]
+Description=clash daemon
+[Service]
+Type=simple
+User=$user
+ExecStart=/usr/bin/clash -d /home/$user/.config/clash/
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+systemctl daemon-reload
+#设置自启动
+
+systemctl start clash.service
+
+systemctl enable clash.service
+
+sleep 5
+}
+
+
+dt_iptables(){
+
+temp_ip=(${loc_ip//./ })
+
+jy_ip=${temp_ip[0]}"."${temp_ip[1]}".0.0"
+
+iptables -A INPUT -i lo -j ACCEPT
+echo "1******************************************************************"
+iptables -A OUTPUT -o lo -j ACCEPT
+echo "2******************************************************************"
+
+iptables -t nat -N clash
+echo "3******************************************************************"
+iptables -t nat -N clash_dns
+echo "4******************************************************************"
+iptables -t nat -A PREROUTING -p tcp --dport 53 -d 198.18.0.0/24 -j clash_dns
+echo "5******************************************************************"
+iptables -t nat -A PREROUTING -p udp --dport 53 -d 198.18.0.0/24 -j clash_dns
+echo "6******************************************************************"
+iptables -t nat -A PREROUTING -p tcp -j clash
+echo "7******************************************************************"
+
+iptables -t nat -A clash_dns -p udp --dport 53 -d 198.18.0.0/24 -j DNAT --to-destination $loc_ip:53
+echo "8******************************************************************"
+iptables -t nat -A clash_dns -p tcp --dport 53 -d 198.18.0.0/24 -j DNAT --to-destination $loc_ip:53
+echo "9******************************************************************"
+#注意：这里的网段和IP你需要自己适配自己的
+iptables -t nat -A clash -d 1.0.0.0/8 -j ACCEPT
+iptables -t nat -A clash -d 10.0.0.0/8 -j ACCEPT
+iptables -t nat -A clash -d 100.64.0.0/10 -j ACCEPT
+iptables -t nat -A clash -d 127.0.0.0/8 -j ACCEPT
+iptables -t nat -A clash -d 169.254.0.0/16 -j ACCEPT
+iptables -t nat -A clash -d 172.16.0.0/12 -j ACCEPT
+iptables -t nat -A clash -d 192.168.0.0/16 -j ACCEPT
+iptables -t nat -A clash -d 224.0.0.0/4 -j ACCEPT
+iptables -t nat -A clash -d 240.0.0.0/4 -j ACCEPT
+iptables -t nat -A clash -d 192.168.1.2/32 -j ACCEPT
+echo "10******************************************************************"
+iptables -t nat -A clash -p tcp --dport 22 -d $loc_ip/24 -j ACCEPT
+echo "11******************************************************************"
+iptables -t nat -A clash -p tcp -j REDIRECT --to-ports 7892
+echo "12******************************************************************"
+netfilter-persistent save
+echo "13******************************************************************"
+netfilter-persistent start
+echo "14******************************************************************"
+iptables-save  > /etc/iptables/rules.v4
+echo "15******************************************************************"
+}
+
+
+set_ip_dns(){
+
+cat << EOF > /etc/network/interfaces
+source /etc/network/interfaces.d/*
+auto lo
+iface lo inet loopback
+auto  $eth_n
+iface $eth_n inet static
+  address $loc_ip
+  netmask 255.255.255.0
+  gateway $gate_ip
+  dns-nameservers $dns
+  mtu $mtu
+  mss $mss
+EOF
+
+echo "14******************************************************************"
+}
+
+dt_menu() {
+ Mainmenu=$(whiptail --clear --ok-button "确定" --backtitle "version:20200326" --title "Clash&SmartDNS一键安装" --menu --nocancel "
+**********************************************************************************
+简介：Clash一键安装
+系统：>=debian10
+详情：修改自油管UP主-米月大佬的“灯塔脚本”
+原作者Youtube：米月
+**********************************************************************************
+请选择需要安装的内容：
+    " 22 86 5\
+        "1" " Clash一键安装"\
+        "4" " 退出" 3>&1 1>&2 2>&3)
+    case $Mainmenu in
+        1)
+        dt_input
+        dt_system_dep        
+        dt_clash
+        dt_iptables
+        set_ip_dns
+        whiptail --title "Clash一键安装成功" --msgbox "
+*************************************************************************
+Clash安装成功，需要科学的设备请参照下面修改。软路由请自行修改。
+设备网关：$loc_ip
+设备DNS：198.18.0.1,198.18.0.2
+Clash配置文件请参照以下地址手动上传到：/home/$user/.config/clash/config.yaml
+Clash控制面板:http://$loc_ip:9090/ui/
+灯塔原作者米月Youtube频道地址：https://t.im/n21o
+Youtube：米月
+电报群：https://t.me/mi_yue
+*************************************************************************" 18 78
+        clear
+        ;;
+        4)
+        #exit
+        clear
+        whiptail --title "脚本已退出" --msgbox "真希望把你留住" 8 78
+        ;;
+        esac
+}
+
+eth_n=$(ip --oneline link show up | grep -v "lo" | awk '{print$2;exit}' | cut -d':' -f1 | cut -d'@' -f1)
+GFW_LIST="https://raw.githubusercontent.com/pzwsquare/dt_client/master/black/gfw_domain.conf"
+SM="https://github.com/pymumu/smartdns/releases/download/Release30/smartdns.1.2020.02.25-2212.x86_64-debian-all.deb"
+CLS="https://github.com/Dreamacro/clash/releases/download/v0.19.0/clash-linux-amd64-v0.19.0.gz"
+
+dt_menu
