@@ -8,7 +8,7 @@ while [[ -z ${user} ]]; do
 done
 
 while [[ -z ${password} ]]; do
-    password=$(whiptail --inputbox --nocancel "输入密码" 8 78 --title "创建密码" 3>&1 1>&2 2>&3)
+    password=$(whiptail --inputbox --nocancel "输入密码" 8 78 --title "创建用户登录密码" 3>&1 1>&2 2>&3)
 done
 
 while [[ -z ${loc_ip} ]]; do
@@ -16,7 +16,7 @@ while [[ -z ${loc_ip} ]]; do
 done
 
 while [[ -z ${gate_ip} ]]; do
-    gate_ip=$(whiptail --inputbox --nocancel "输入网关IP（输入网关IP（主路由）" 8 78 --title "网关IP" 3>&1 1>&2 2>&3)
+    gate_ip=$(whiptail --inputbox --nocancel "输入网关IP（主路由IP）" 8 78 --title "网关IP" 3>&1 1>&2 2>&3)
 done
 
 while [[ -z ${dns} ]]; do
@@ -24,15 +24,7 @@ while [[ -z ${dns} ]]; do
 done
 
 while [[ -z ${config} ]]; do
-    config=$(whiptail --inputbox --nocancel "输入链接（仅测试墙洞）" 8 78 --title "Clash托管连接" 3>&1 1>&2 2>&3)
-done
-
-while [[ -z ${port} ]]; do
-    port=$(whiptail --inputbox --nocancel "输入控制面板端口（例如9090）" 8 78 --title "控制面板端口" 3>&1 1>&2 2>&3)
-done
-
-while [[ -z ${secret} ]]; do
-    secret=$(whiptail --inputbox --nocancel "输入控制面板密码（例如9090）" 8 78 --title "控制面板密码" 3>&1 1>&2 2>&3)
+    config=$(whiptail --inputbox --nocancel "输入链接（仅测试墙洞，需带有DNS配置）" 8 78 --title "Clash托管连接" 3>&1 1>&2 2>&3)
 done
 }
 
@@ -138,11 +130,11 @@ sed -i '/socks-port:7891/a\redir-port:7892' config.yaml
 
 sed -i '/redir-port:7892/a\allow-lan:true' config.yaml
 
-sed -i '/allow-lan:true/a\external-controller:0.0.0.0:$port' config.yaml
+sed -i '/allow-lan:true/a\external-controller:0.0.0.0:9090' config.yaml
 
 sed -i '/external-controller:0.0.0.0/a\external-ui:dashboard' config.yaml
 
-sed -i '/external-ui:dashboard/a\secret:"$secret"' config.yaml
+sed -i '/external-ui:dashboard/a\secret:"123456"' config.yaml
 
 wget https://github.com/haishanh/yacd/archive/gh-pages.zip
 
@@ -269,9 +261,9 @@ Clash安装成功，需要科学的设备请参照下面修改。软路由请自
 设备网关：$loc_ip
 设备DNS：198.18.0.1,198.18.0.2
 Clash配置文件目录：/home/$user/.config/clash/config.yaml
-Clash控制面板:http://$loc_ip:9090/ui/
+Clash控制面板IP:http://$loc_ip:9090/ui/
+Clash控制面板登录密码:123456
 灯塔原作者米月Youtube频道地址：https://t.im/n21o
-Youtube：米月
 电报群：https://t.me/mi_yue
 *************************************************************************" 18 78
         clear
