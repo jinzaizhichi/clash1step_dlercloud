@@ -19,12 +19,8 @@ while [[ -z ${dns} ]]; do
     dns=$(whiptail --inputbox --nocancel "输入dns（随你喜欢）" 8 78 --title "输入dns" 3>&1 1>&2 2>&3)
 done
 
-while [[ -z ${mtu} ]]; do
-    mtu=$(whiptail --inputbox --nocancel "输入MTU（不懂就填1480）" 8 78 --title "输入MTU" 3>&1 1>&2 2>&3)
-done
-
-while [[ -z ${mss} ]]; do
-    mss=$(whiptail --inputbox --nocancel "输入MSS（MTU-40）" 8 78 --title "输入MSS" 3>&1 1>&2 2>&3)
+while [[ -z ${config} ]]; do
+    config=$(whiptail --inputbox --nocancel "输入dns（随你喜欢）" 8 78 --title "输入dns" 3>&1 1>&2 2>&3)
 done
 }
 
@@ -202,8 +198,6 @@ iface $eth_n inet static
   netmask 255.255.255.0
   gateway $gate_ip
   dns-nameservers $dns
-  mtu $mtu
-  mss $mss
 EOF
 
 echo "14******************************************************************"
