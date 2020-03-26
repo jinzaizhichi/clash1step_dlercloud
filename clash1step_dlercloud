@@ -24,7 +24,7 @@ while [[ -z ${dns} ]]; do
 done
 
 while [[ -z ${config} ]]; do
-    config=$(whiptail --inputbox --nocancel "输入链接（任意机场）" 8 78 --title "输入Clash托管连接" 3>&1 1>&2 2>&3)
+    config=$(whiptail --inputbox --nocancel "输入链接（仅测试墙洞）" 8 78 --title "输入Clash托管连接" 3>&1 1>&2 2>&3)
 done
 }
 
@@ -39,38 +39,40 @@ echo $user:$password|chpasswd
 
 usermod -aG sudo $user
 
-cat << EOF > /etc/sysctl.conf
-net.ipv4.ip_forward=1
-fs.file-max = 999999
-net.core.rmem_max = 67108864
-net.core.wmem_max = 67108864
-net.core.rmem_default = 6291456
-net.core.wmem_default = 6291456
-net.core.netdev_max_backlog = 65535
-net.core.somaxconn = 262114
-net.ipv4.tcp_tw_reuse = 1
-net.ipv4.tcp_fin_timeout = 30
-net.ipv4.tcp_keepalive_time = 1200
-net.ipv4.tcp_max_syn_backlog = 8192
-net.ipv4.tcp_max_tw_buckets = 5000
-net.ipv4.tcp_mem = 8192 131072 67108864
-net.ipv4.tcp_rmem = 10240 87380 12582912
-net.ipv4.tcp_wmem = 10240 87380 12582912
-net.ipv4.tcp_mtu_probing = 1
-net.ipv4.tcp_notsent_lowat = 16384
-net.ipv4.tcp_syncookies = 1
-net.ipv4.tcp_max_orphans= 262114
-net.ipv4.tcp_fastopen = 3
-net.ipv4.ip_local_port_range = 1024 65000
-net.ipv4.udp_mem = 8192 131072 67108864
-net.ipv4.udp_rmem_min = 4096
-net.ipv4.udp_wmem_min = 4096
-net.core.default_qdisc = fq
-net.ipv4.tcp_congestion_control = bbr
-EOF
-
 echo " ">>/etc/sysctl.conf
-echo "# made for disabled IPv6 in $(date +%F)">>/etc/sysctl.conf
+echo "# made ipv4-forward in $(date +%F)">>/etc/sysctl.conf
+echo 'net.ipv4.ip_forward=1'>>/etc/sysctl.conf
+echo " ">>/etc/sysctl.conf
+echo 'fs.file-max = 999999'>>/etc/sysctl.conf
+echo 'net.core.rmem_max = 67108864'>>/etc/sysctl.conf
+echo 'net.core.wmem_max = 67108864'>>/etc/sysctl.conf
+echo 'net.core.rmem_default = 6291456'>>/etc/sysctl.conf
+echo 'net.core.wmem_default = 6291456'>>/etc/sysctl.conf
+echo 'net.core.netdev_max_backlog = 65535'>>/etc/sysctl.conf
+echo 'net.core.somaxconn = 262114'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_tw_reuse = 1'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_fin_timeout = 30'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_keepalive_time = 1200'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_max_syn_backlog = 8192'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_max_tw_buckets = 5000'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_mem = 8192 131072 67108864'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_rmem = 10240 87380 12582912'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_wmem = 10240 87380 12582912'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_mtu_probing = 1'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_notsent_lowat = 16384'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_syncookies = 1'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_max_orphans= 262114'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_fastopen = 3'>>/etc/sysctl.conf
+echo 'net.ipv4.ip_local_port_range = 1024 65000'>>/etc/sysctl.conf
+echo 'net.ipv4.udp_mem = 8192 131072 67108864'>>/etc/sysctl.conf
+echo 'net.ipv4.udp_rmem_min = 4096'>>/etc/sysctl.conf
+echo 'net.ipv4.udp_wmem_min = 4096'>>/etc/sysctl.conf
+echo " ">>/etc/sysctl.conf
+echo "# made bbr in $(date +%F)">>/etc/sysctl.conf
+echo 'net.core.default_qdisc = fq'>>/etc/sysctl.conf
+echo 'net.ipv4.tcp_congestion_control = bbr'>>/etc/sysctl.conf
+echo " ">>/etc/sysctl.conf
+echo "# made ipv6-disable in $(date +%F)">>/etc/sysctl.conf
 echo 'net.ipv6.conf.all.disable_ipv6 = 1'>>/etc/sysctl.conf
 echo 'net.ipv6.conf.default.disable_ipv6 = 1'>>/etc/sysctl.conf
 echo 'net.ipv6.conf.lo.disable_ipv6 = 1'>>/etc/sysctl.conf
@@ -78,16 +80,12 @@ tail -5 /etc/sysctl.conf
 
 sysctl -p
 
-cat << EOF > /etc/ssh/sshd_config
-ListenAddress 0.0.0.0
-AddressFamily inet
-EOF
+echo 'ListenAddress 0.0.0.0'>>/etc/ssh/sshd_config
+echo 'AddressFamily inet'>>/etc/ssh/sshd_config
 
 service sshd restart
 
-cat << EOF > /etc/systemd/resolved.conf
-DNSStubListener=no
-EOF
+echo 'DNSStubListener=no'>>/etc/systemd/resolved.conf
 }
 
 
@@ -237,7 +235,7 @@ dt_menu() {
 Clash安装成功，需要科学的设备请参照下面修改。软路由请自行修改。
 设备网关：$loc_ip
 设备DNS：198.18.0.1,198.18.0.2
-Clash配置文件请参照以下地址手动上传到：/home/$user/.config/clash/config.yaml
+Clash配置文件目录：/home/$user/.config/clash/config.yaml
 Clash控制面板:http://$loc_ip:9090/ui/
 灯塔原作者米月Youtube频道地址：https://t.im/n21o
 Youtube：米月
