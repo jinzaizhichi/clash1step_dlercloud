@@ -136,6 +136,10 @@ sed -i '/external-controller: 0.0.0.0/a\external-ui: dashboard' config.yaml
 
 sed -i '/external-ui: dashboard/a\secret: "123456"' config.yaml
 
+sed -i 's/listen:/#listen:/g' config.yaml
+
+sed -i '/#listen:/a\  listen: 0.0.0.0:53' config.yaml
+
 wget https://github.com/haishanh/yacd/archive/gh-pages.zip
 
 unzip gh-pages.zip
